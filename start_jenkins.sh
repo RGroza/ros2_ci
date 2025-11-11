@@ -3,6 +3,11 @@
 # to run in that case
 set -e
 
+# Install java. We are using JRE 17.
+sudo apt-get update -y || true
+sudo apt-get install -y openjdk-21-jre
+
+# Set Jenkins environment variables
 export JENKINS_HOME=/home/user/webpage_ws/jenkins
 export HOME=/home/user/webpage_ws/jenkins
 export SSH_CONFIG_FILE=/home/user/webpage_ws/jenkins/.ssh/config
@@ -11,10 +16,6 @@ export SSH_KNOWN_HOSTS_FILE=/home/user/webpage_ws/jenkins/.ssh/known_hosts
 
 JENKINS_FILE="$JENKINS_HOME/jenkins.war"
 mkdir -p "$JENKINS_HOME"
-
-# Install java. We are using JRE 17.
-sudo apt-get update -y || true
-sudo apt-get install -y openjdk-21-jre
 
 # Download the Jenkins .war file, if not there already
 if [ ! -f "$JENKINS_FILE" ]; then
@@ -61,3 +62,9 @@ else
     echo $URL >> $STATE_FILE
     echo "3. See '$STATE_FILE' for Jenkins PID and URL."
 fi
+
+# Install and setup docker
+sudo apt install -y docker.io
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+newgrp docker
