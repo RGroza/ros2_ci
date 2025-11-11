@@ -24,36 +24,44 @@ pipeline {
             }
         }
 
-        stage('Run Simulation and Tests') {
+        stage('Run ROS 2 Simulation and Tests') {
             steps {
-                echo "Running simulation and ROS 2 tests inside container..."
+                echo "Running ROS 2 Docker container..."
                 sh '''
-                    docker run --name ${CONTAINER_NAME} --rm \
-                        -e DISPLAY=${DISPLAY} \
-                        -e QT_X11_NO_MITSHM=${QT_X11_NO_MITSHM} \
-                        -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
-                        ${IMAGE_NAME} /bin/bash -c "
-                            set -e
-                            source /opt/ros/humble/setup.bash &&
-                            source /root/ros2_ws/install/setup.bash &&
+                docker run --name ${CONTAINER_NAME} --rm \
+                    -e DISPLAY=${DISPLAY} \
+                    -e QT_X11_NO_MITSHM=${QT_X11_NO_MITSHM} \
+                    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+                    ${IMAGE_NAME} /bin/bash -c "
+                        set -e
+                        source /opt/ros/humble/setup.bash &&
+                        source /root/ros2_ws/install/setup.bash &&
 
-                            echo 'Launching Gazebo simulation...' &&
-                            ros2 launch fastbot_gazebo one_fastbot_room.launch.py &
-                            GAZEBO_PID=$!
+                        echo 'Launching Gazebo simulation...' &&
+                        ros2 launch fastbot_gazebo one_fastbot_room.launch.py &
+                        GAZEBO_PID=$!
 
-                            echo 'Waiting for /odom topic (Gazebo startup)...'
-                            timeout 90 bash -c 'until ros2 topic list | grep -q /odom; do sleep 2; echo Waiting...; done'
+                        echo 'Waiting for simulation topics...' &&
+                        timeout 60 bash -c 'until ros2 topic list | grep -q /odom; do sleep 2; echo Waiting for Gazebo...; done'
 
-                            echo 'Running fastbot_action_server node...'
-                            ros2 run fastbot_waypoints fastbot_action_server &
+                        echo 'Starting fastbot_action_server node...' &&
+                        source /root/ros2_ws/install/setup.bash &&
+                        ros2 run fastbot_waypoints fastbot_action_server &
+                        ACTION_PID=$!
 
-                            echo 'Running ROS 2 tests for fastbot_waypoints...'
-                            colcon test --packages-select fastbot_waypoints --event-handlers console_direct+
+                        echo 'Waiting for action server to become available...' &&
+                        timeout 30 bash -c 'until ros2 node list | grep -q fastbot_action_server; do sleep 2; echo Waiting for fastbot_action_server...; done'
 
-                            echo 'Cleaning up Gazebo process...'
-                            kill $GAZEBO_PID || true
-                            wait $GAZEBO_PID || true
-                        "
+                        echo 'Running tests...' &&
+                        source /root/ros2_ws/install/setup.bash &&
+                        colcon test --packages-select fastbot_waypoints --event-handler=console_direct+
+
+                        echo 'Cleaning up...' &&
+                        kill $ACTION_PID || true &&
+                        kill $GAZEBO_PID || true &&
+                        wait $ACTION_PID || true &&
+                        wait $GAZEBO_PID || true
+                    "
                 '''
             }
         }
