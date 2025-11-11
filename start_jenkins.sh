@@ -3,21 +3,22 @@
 # to run in that case
 set -e
 
-# Set the JENKINS_HOME environment variable. This will cause
-# Jenkins will run from this directory.
-# Create the JENKINS_HOME directory if it doesn't exist.
-export JENKINS_HOME=~/webpage_ws/jenkins
-mkdir -p $JENKINS_HOME
+export JENKINS_HOME=/home/user/webpage_ws/jenkins
+export HOME=/home/user/webpage_ws/jenkins
+export SSH_CONFIG_FILE=/home/user/webpage_ws/jenkins/.ssh/config
+export GIT_SSH_COMMAND="ssh -F /home/user/webpage_ws/jenkins/.ssh/config"
+export SSH_KNOWN_HOSTS_FILE=/home/user/webpage_ws/jenkins/.ssh/known_hosts
+
+JENKINS_FILE="$JENKINS_HOME/jenkins.war"
+mkdir -p "$JENKINS_HOME"
 
 # Install java. We are using JRE 17.
 sudo apt-get update -y || true
 sudo apt-get install -y openjdk-21-jre
 
 # Download the Jenkins .war file, if not there already
-cd ~
-JENKINS_FILE="/home/user/jenkins.war"
 if [ ! -f "$JENKINS_FILE" ]; then
-    wget https://updates.jenkins.io/download/war/2.479.1/jenkins.war
+    wget -O "$JENKINS_FILE" https://updates.jenkins.io/download/war/2.479.1/jenkins.war
 fi
 
 # Jenkins is about to run, but we must check if 
@@ -34,7 +35,7 @@ else
     # Store Jenkins proceess ID in JENKINS_PID
     java -Dhudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION=true \
          -DJENKINS_HOME=$JENKINS_HOME \
-         -jar jenkins.war --prefix="/$SLOT_PREFIX/jenkins/" &
+         -jar "$JENKINS_FILE" --prefix="/$SLOT_PREFIX/jenkins/" &
     JENKINS_PID=$!
     sleep 15s
 
