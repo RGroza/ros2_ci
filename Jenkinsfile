@@ -56,11 +56,13 @@ pipeline {
                         source /root/ros2_ws/install/setup.bash &&
                         colcon test --packages-select fastbot_waypoints --event-handler=console_direct+
 
-                        echo 'Cleaning up...' &&
-                        kill $ACTION_PID || true &&
-                        kill $GAZEBO_PID || true &&
-                        wait $ACTION_PID || true &&
-                        wait $GAZEBO_PID || true
+                        echo 'Cleaning up processes...' &&
+                        pkill -f fastbot_action_server || true &&
+                        pkill -f gzserver || true &&
+                        pkill -f gzclient || true &&
+                        pkill -f robot_state_publisher || true &&
+                        pkill -f ros2 || true &&
+                        sleep 3
                     "
                 '''
             }
