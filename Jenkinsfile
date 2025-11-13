@@ -38,8 +38,7 @@ pipeline {
                         source /root/ros2_ws/install/setup.bash &&
 
                         echo 'Launching Gazebo simulation...' &&
-                        ros2 launch fastbot_gazebo one_fastbot_room.launch.py &
-                        GAZEBO_PID=$!
+                        ros2 launch fastbot_gazebo one_fastbot_room.launch.py
 
                         echo 'Waiting for simulation topics...' &&
                         timeout 60 bash -c 'until ros2 topic list | grep -q /odom; do sleep 2; echo Waiting for Gazebo...; done'
