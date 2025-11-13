@@ -9,4 +9,4 @@ jobs:
     steps:
       - name: Call Jenkins build
         run: |
-          curl -X POST "https://i-01866847dde4b16c9.robotigniteacademy.com/e3b0dd76-9fe6-4c27-aaf7-90aceb028b02/jenkins/job/ros2_ci/build?token=ROS2_CI_TOKEN"
+          curl -X POST "https://i-03c9bca7b6eb24ae0.robotigniteacademy.com/a056aac4-13d2-485c-a306-aa60b508b2c9/jenkins/job/ros2_ci/build?token=ROS2_CI_TOKEN"
